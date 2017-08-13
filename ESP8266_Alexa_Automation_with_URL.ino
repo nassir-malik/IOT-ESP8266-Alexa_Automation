@@ -18,7 +18,7 @@ const char* password = "password";
 String device_name= "DemoSwitch";// you can chage the device name from "DemoSwitch" to anything
  // local port to listen on
 /*********************************/
-//Change the GPIO
+//Change the GPIO - for on board LED const int relayPin = LED_BUILTIN; //GPIO1﻿
 const int relayPin = 2;
 /*********************************/
 /*********************************/
