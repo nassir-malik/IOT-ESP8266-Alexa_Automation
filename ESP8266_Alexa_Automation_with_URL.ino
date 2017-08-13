@@ -19,7 +19,7 @@ String device_name= "DemoSwitch";// you can chage the device name from "DemoSwit
  // local port to listen on
 /*********************************/
 //Change the GPIO
-const int relayPin = 16;
+const int relayPin = 2;
 /*********************************/
 /*********************************/
 
