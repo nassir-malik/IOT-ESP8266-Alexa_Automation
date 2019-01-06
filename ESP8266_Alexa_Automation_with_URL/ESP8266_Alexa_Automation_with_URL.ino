@@ -9,6 +9,8 @@ boolean connectUDP();
 void startHttpServer();
 void turnOnRelay();
 void turnOffRelay();
+void sendRelayState();
+bool switchStatus;
 /*********************************/
 /*********************************/
 /*********************************/
@@ -109,7 +111,8 @@ void loop() {
         Serial.println(request);
          
         if(request.indexOf('M-SEARCH') > 0) {
-            if(request.indexOf("urn:Belkin:device:**") > 0) {
+           // if(request.indexOf("urn:Belkin:device:**") > 0) {
+              if((request.indexOf("urn:Belkin:device:**") > 0) || (request.indexOf("ssdp:all") > 0) || (request.indexOf("upnp:rootdevice") > 0)) {
                 Serial.println("Responding to search request ...");
                 respondToSearch();
             }
@@ -187,21 +190,30 @@ void startHttpServer() {
       String request = HTTP.arg(0);      
       //Serial.print("request:");
      //Serial.println(request);
- 
+ if(request.indexOf("SetBinaryState") >= 0) {
       if(request.indexOf("<BinaryState>1</BinaryState>") > 0) {
           Serial.println("Got Turn on request");
-          //turnOnRelay();
+          switchStatus=1;
           digitalWrite(relayPin, HIGH);
+          
       }
 
       if(request.indexOf("<BinaryState>0</BinaryState>") > 0) {
           Serial.println("Got Turn off request");
-          //turnOffRelay();
+          switchStatus=0;
            digitalWrite(relayPin, LOW);
       }
-      
+ }
+
+  if(request.indexOf("GetBinaryState") >= 0) {
+    Serial.println("Got binary state request");
+    sendRelayState();
+  }
+
+ 
       HTTP.send(200, "text/plain", "");
     });
+
 
 
     HTTP.on("/switch", HTTP_GET, []() {
@@ -366,4 +378,22 @@ void turnOnRelay() {
 
 void turnOffRelay() {
   digitalWrite(relayPin,HIGH );  // turn off relay with voltage LOW
+}
+
+void sendRelayState() {
+  String body = 
+      "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
+      "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
+      "<BinaryState>";
+      
+  body += (switchStatus ? "1" : "0");
+  
+  body += "</BinaryState>\r\n"
+      "</u:GetBinaryStateResponse>\r\n"
+      "</s:Body> </s:Envelope>\r\n";
+  
+  HTTP.send(200, "text/xml", body.c_str());
+
+  Serial.print("Sending :");
+  Serial.println(body);
 }
